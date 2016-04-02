@@ -5,13 +5,13 @@
     "authors": [
         {
             "name": "ClareChang",
-            "email": "hbclare@live.com"
+            "qq": "51351073"
         }
     ],
     "support":	[
 	{
-            "name": "xums",
-            "email": ""
+            "wiki": "https://github.com/laravelSTHelper/ModelHelper/wiki",
+            "email": "hbclare@live.com"
 	}
     ],
     "autoload": {
