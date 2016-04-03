@@ -1,4 +1,4 @@
-<?php namespace Angejia\Pea;
+<?php namespace Hbclare\ModelHelper;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Expression;
@@ -30,6 +30,19 @@ class QueryBuilder extends Builder
         }
         //处理缓存key
         $setCacheKey = $this->model->getCacheKeys();
+        $autoCache = $this->model->getAutoEachCache();
+        if(empty($setCacheKey)    #未设置写入key
+            && true === $autoCache #且自动原子化缓存开启
+            && $this->isSimple() #且是简单的sql
+        ){
+            $setCacheKey = 'autoCache_'.$this->model->table().'_'
+                .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
+        }
+
+        if(empty($setCacheKey)){
+            return false;
+        }
+
         $this->_readKey = $this->replaceKey($setCacheKey);
         return true;
     }
@@ -48,7 +61,6 @@ class QueryBuilder extends Builder
         }
         //获取设置的清除key
         $flushKeyArr = $this->model->getFlushKeys();
-        $realFlushKey = $this->formatAutoKey($flushKeyArr);
 
         //获取自动清除类
         if('i' == $type){
@@ -60,23 +72,109 @@ class QueryBuilder extends Builder
         }
 
         $realAutoFlushKey = $this->formatAutoKey($autoFlush);
-        $this->_flushKey = $realFlushKey + $realAutoFlushKey;
-
-        if( 0 == count($this->_flushKey) ){
+        if( true === $this->model->getAutoEachCache() && 'i' !== $type){#透明处理
+            $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
+                .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
+        }
+        $flushKey = array_merge($flushKeyArr, $realAutoFlushKey, $autoEachCache);
+        if( 0 == count($autoEachCache) ){
             return false;
         }
-
+        $this->_flushKey =$this->formatAutoKey($flushKey);
         return true;
     }
 
-
     /**
-     * @return Cache
+     * 判断当前查询是否未「复杂查询」，判断标准
+     * 1. 含有 max, sum 等汇聚函数
+     * 2. 包含 distinct 指令
+     * 3. 包含分组
+     * 4. 包含连表
+     * 5. 包含联合
+     * 6. 包含子查询
+     * 7. 包含原生（raw）语句
+     * 8. 包含排序
+     *
+     * 复杂查询使用表级缓存，命中率较低
      */
-//    protected function getCache()
-//    {
-//        return Container::getInstance()->make(Cache::class);
-//    }
+    private function isAwful()
+    {
+        if (self::hasRawColumn($this->columns)) {
+            return true;
+        }
+
+        return $this->aggregate
+        or $this->distinct
+        or $this->groups
+        or $this->joins
+        or $this->orders
+        or $this->unions
+        or !$this->wheres
+        or array_key_exists('Exists', $this->wheres)
+        or array_key_exists('InSub', $this->wheres)
+        or array_key_exists('NotExists', $this->wheres)
+        or array_key_exists('NotInSub', $this->wheres)
+        or array_key_exists('Sub', $this->wheres)
+        or array_key_exists('raw', $this->wheres);
+    }
+    /**
+     * 「简单查询」就是只根据主键过滤结果集的查询，有以下两种形式：
+     * 1. select * from foo where id = 1;
+     * 2. select * from foo where id in (1, 2, 3);
+     */
+    private function isSimple()
+    {
+        if ($this->isAwful()) {
+            return false;
+        }
+
+        if (!$this->wheres) {
+            return false;
+        }
+
+        if (count($this->wheres) > 1) {
+            return false;
+        }
+
+        $where = current($this->wheres);
+
+        if ($where['type'] === 'Nested') {
+            return false;
+        }
+
+        $id = $this->model->primaryKey();
+        $tableId = $this->model->table() . '.' . $this->model->primaryKey();
+        if (!in_array($where['column'], [$id, $tableId])) {
+            return false;
+        }
+
+        if ($where['type'] === 'In') {
+            return true;
+        }
+
+        if ($where['type'] === 'Basic') {
+            if ($where['operator'] === '=') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function hasRawColumn($columns)
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        foreach ($columns as $column) {
+            if ($column instanceof Expression) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     //重写get动作，让get动作带上cache
     public function get($columns = ['*'])
@@ -98,7 +196,7 @@ class QueryBuilder extends Builder
         #如果缓存不存在
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
-            Cache::put($this->_readKey, $Row, 3600);
+            Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
             return $Row;
         }else{
             return Cache::get($this->_readKey);
@@ -108,31 +206,34 @@ class QueryBuilder extends Builder
     //重写insert动作，让insert带上清理缓存的连带动作
     public function insert(array $values)
     {
+        $Row = parent::insert($values);
         if ($this->needFlushCache('i')) {
             $this->cleanKeys();
         }
 
-        return parent::insert($values);
+        return $Row;
     }
 
     //重写update动作，让update带上清理缓存的连带动作
     public function update(array $values)
     {
+        $Row = parent::update($values);
         if ($this->needFlushCache('u')) {
             $this->cleanKeys();
         }
-        return parent::update($values);
+        return $Row;
     }
 
 
     //重写delete动作，让delete带上清理缓存的连带动作
     public function delete($id = null)
     {
+        $Row = parent::delete($values);
         if ($this->needFlushCache('d')) {
             $this->cleanKeys();
         }
 
-        return parent::delete($id);
+        return $Row;
     }
 
 
@@ -201,6 +302,17 @@ class QueryBuilder extends Builder
      */
     private function cleanKeys(){
         foreach($this->_flushKey as $key => $value){
+            #如果是redis，key通配符*， ?
+            if('redis' == Cache::getDefaultDriver()
+                && ( false !== stripos($value, '*')
+                    || false !== stripos($value, '?')
+                )
+            ){
+                $keyArr = Cache::getRedis()->keys($value);
+                foreach((array)$keyArr as $k=>$v){
+                    Cache::forget($v);
+                }
+            }
             Cache::forget($value);
         }
         $this->_flushKey = array();

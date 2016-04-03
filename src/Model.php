@@ -1,4 +1,4 @@
-<?php namespace Angejia\Pea;
+<?php namespace Hbclare\ModelHelper;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,8 +9,7 @@ abstract class Model extends EloquentModel
     //是否开启Model缓存总开关，false关闭，ture开启
     protected $endisabledCache = true;
 
-    //是否开启默认原子化缓存（透明缓存）
-    //TODO 还未开发
+    //是否开启默透明缓存
     protected $autoEachCache = false;
 
     //需要缓存的key，在一次get()流程中生效
@@ -21,7 +20,6 @@ abstract class Model extends EloquentModel
 
     //开启自动原子化缓存
     protected function startAutoEachCache(){
-        exit('功能未开放');
         $this->autoEachCache = true;
     }
     //关闭自动原子化缓存
@@ -29,6 +27,9 @@ abstract class Model extends EloquentModel
         $this->autoEachCache = false;
     }
 
+    public function getAutoEachCache(){
+        return $this->autoEachCache;
+    }
 
     /*
      * insert以后，需要自动执行清理缓存，支持数组
@@ -53,6 +54,7 @@ abstract class Model extends EloquentModel
     }
 
     //设置/读取 需删除缓存key
+    //需删除缓存，在redis驱动下，支持*,?通配符匹配批量删除
     public function setFlushKeys($key){
         !is_array($key) ?
             $keyArr[] = $key :
@@ -132,7 +134,7 @@ abstract class Model extends EloquentModel
 
     public function newEloquentBuilder($query)
     {
-//        $builder = new Builder($query);
+        $builder = new Builder($query);
 
 //        $builder->macro('key', function (Builder $builder) {
 //            return $builder->getQuery()->key();
@@ -161,8 +163,6 @@ abstract class Model extends EloquentModel
             unset($saveArr[$this->primaryKey]);
             return $this::where($this->primaryKey, $pkValue)
                         ->update($saveArr);
-
         }
     }
-
 }
