@@ -1,0 +1,10 @@
+<?php
+
+namespace DummyNamespace;
+
+use Hbclare\ModelHelper\Model;
+
+class DummyClass extends Model {
+
+
+}
