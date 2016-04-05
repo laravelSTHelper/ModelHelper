@@ -1,6 +1,7 @@
 # ModelHelper
 对laravel Eloquent OMR 的一层带缓存的封装
 参考了https://github.com/angejia/pea.git 的缓存层实现
+参考了https://github.com/aaronjan/housekeeper 的artisan的实现
 
 ##封装的目的
 在laravel的使用过程中，发现很多对model层缓存的透明化封装，而这些封装主要是对所有的sql语句进行了缓存，如果有数据的更新或者删除，则对数据进行了全部删除，做的好一些的，就是对表级数据，进行了删除。
