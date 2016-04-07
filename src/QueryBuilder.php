@@ -70,7 +70,7 @@ class QueryBuilder extends Builder
         }else if('d' == $type){
             $autoFlush = $this->model->getAfterDeleteFlushKey();
         }
-
+        $autoEachCache = [];
         $realAutoFlushKey = $this->formatAutoKey($autoFlush);
         if( true === $this->model->getAutoEachCache() && 'i' !== $type){#透明处理
             $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
@@ -228,7 +228,7 @@ class QueryBuilder extends Builder
     //重写delete动作，让delete带上清理缓存的连带动作
     public function delete($id = null)
     {
-        $Row = parent::delete($values);
+        $Row = parent::delete($id);
         if ($this->needFlushCache('d')) {
             $this->cleanKeys();
         }
