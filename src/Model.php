@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
+use Cache;
 
 abstract class Model extends EloquentModel
 {
