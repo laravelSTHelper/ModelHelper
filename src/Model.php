@@ -3,7 +3,6 @@
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
-use Cache;
 
 abstract class Model extends EloquentModel
 {
@@ -18,9 +17,10 @@ abstract class Model extends EloquentModel
     //需要清理的缓存名字
     protected $flushKey = array();
 
+
     //开启自动原子化缓存
-    protected function startAutoEachCache($cacheTime = 30){
-        Cache::setDefaultCacheTime($cacheTime);
+    protected function startAutoEachCache()
+    {
         $this->autoEachCache = true;
     }
 
