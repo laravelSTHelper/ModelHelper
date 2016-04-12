@@ -3,7 +3,6 @@
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
-use Cache;
 
 abstract class Model extends EloquentModel
 {
@@ -18,9 +17,10 @@ abstract class Model extends EloquentModel
     //需要清理的缓存名字
     protected $flushKey = array();
 
+
     //开启自动原子化缓存
-    protected function startAutoEachCache($cacheTime = 30){
-        Cache::setDefaultCacheTime($cacheTime);
+    protected function startAutoEachCache()
+    {
         $this->autoEachCache = true;
     }
 
@@ -193,14 +193,17 @@ abstract class Model extends EloquentModel
      * @param array $orderBy eg：['id'=>'desc']
      * @param null $limit
      */
-    public function getList($where, $orderBy = [], $limit = null)
+    public function getList($where, $orderBy = [], $take = null, $skip = null)
     {
         $queryObj = $this->formatWhere($where);
         if (!empty($orderBy)) {
             $queryObj = $this->formatOrderBy($queryObj, $orderBy);
         }
-        if (!empty($limit)) {
-            $queryObj->take($limit);
+        if (!empty($take)) {
+            $queryObj->take($take);
+        }
+        if (!empty($skip)) {
+            $queryObj->skip($skip);
         }
         return $queryObj->get();
     }
@@ -231,7 +234,11 @@ abstract class Model extends EloquentModel
         $queryObj = $this->where(function ($query) use ($where) {
             if (!empty($where)) {
                 foreach ($where as $key => $value) {
-                    $query->where($key, $value);
+                    if(is_array($value)){
+                        $query->where($key, $value[0], $value[1]);
+                    }else{
+                        $query->where($key, $value);
+                    }
                 }
             }
         });

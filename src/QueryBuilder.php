@@ -31,6 +31,7 @@ class QueryBuilder extends Builder
         //处理缓存key
         $setCacheKey = $this->model->getCacheKeys();
         $autoCache = $this->model->getAutoEachCache();
+
         if(empty($setCacheKey)    #未设置写入key
             && true === $autoCache #且自动原子化缓存开启
             && $this->isSimple() #且是简单的sql
@@ -288,8 +289,10 @@ class QueryBuilder extends Builder
     public function findWhereValue($value){
         //获取字段
         $originWheres = $this->wheres;
+        //获取表名
+        $tablename = $this->model->table();
         foreach($originWheres as $whereKey => $whereValue){
-            if( '=' == $whereValue['operator'] && $value == $whereValue['column']){
+            if( '=' == $whereValue['operator'] && $tablename.'.'.$value == $whereValue['column']){
                 return $whereValue['value'];
             }
         }
