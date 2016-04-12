@@ -308,4 +308,11 @@ abstract class Model extends EloquentModel
         return $this->formatWhere($where)->delete();
     }
 
+    /**
+     * 根据条件计算条数
+     * @return mixed
+     */
+    public function getCount($where){
+        return $this->formatWhere($where)->count();
+    }
 }

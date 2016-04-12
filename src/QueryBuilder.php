@@ -32,6 +32,9 @@ class QueryBuilder extends Builder
         $setCacheKey = $this->model->getCacheKeys();
         $autoCache = $this->model->getAutoEachCache();
 
+        //$setCacheKey使用完成后，本轮get失效
+        $this->model->setCacheKeys('');
+
         if(empty($setCacheKey)    #未设置写入key
             && true === $autoCache #且自动原子化缓存开启
             && $this->isSimple() #且是简单的sql
@@ -78,10 +81,11 @@ class QueryBuilder extends Builder
                 .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
         }
         $flushKey = array_merge($flushKeyArr, $realAutoFlushKey, $autoEachCache);
-        if( 0 == count($autoEachCache) ){
+        if( 0 == count($flushKey) ){
             return false;
         }
-        $this->_flushKey =$this->formatAutoKey($flushKey);
+
+        $this->_flushKey = $this->formatAutoKey($flushKey);
         return true;
     }
 
@@ -198,30 +202,32 @@ class QueryBuilder extends Builder
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
             Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
+            $this->_readKey = array();
             return $Row;
         }else{
-            return Cache::get($this->_readKey);
+            $res = Cache::get($this->_readKey);
+            $this->_readKey = array();
+            return $res;
         }
     }
 
     //重写insert动作，让insert带上清理缓存的连带动作
     public function insert(array $values)
     {
-        $Row = parent::insert($values);
         if ($this->needFlushCache('i')) {
             $this->cleanKeys();
         }
-
+        $Row = parent::insert($values);
         return $Row;
     }
 
     //重写update动作，让update带上清理缓存的连带动作
     public function update(array $values)
     {
-        $Row = parent::update($values);
         if ($this->needFlushCache('u')) {
             $this->cleanKeys();
         }
+        $Row = parent::update($values);
         return $Row;
     }
 
@@ -229,11 +235,10 @@ class QueryBuilder extends Builder
     //重写delete动作，让delete带上清理缓存的连带动作
     public function delete($id = null)
     {
-        $Row = parent::delete($id);
         if ($this->needFlushCache('d')) {
             $this->cleanKeys();
         }
-
+        $Row = parent::delete($id);
         return $Row;
     }
 
@@ -245,7 +250,9 @@ class QueryBuilder extends Builder
     private function formatAutoKey($cacheKeyArr){
         $realKeyArr = array();
         foreach($cacheKeyArr as $key => $value){
+            //dump($value);
             $realKey = $this->replaceKey($value);
+            //dump($realKey);
             !empty($realKey) && $realKeyArr[] = $realKey;
         }
         return $realKeyArr;
@@ -266,6 +273,7 @@ class QueryBuilder extends Builder
         }
         $searchArr = $repaceArr = array();//初始化
         //字段对比
+        //dump($result);
         foreach($result[1] as $key => $value){
             $findValue = $this->findWhereValue($value);
             //只要遇到未查到的情况，抛弃此条
@@ -292,7 +300,9 @@ class QueryBuilder extends Builder
         //获取表名
         $tablename = $this->model->table();
         foreach($originWheres as $whereKey => $whereValue){
-            if( '=' == $whereValue['operator'] && $tablename.'.'.$value == $whereValue['column']){
+            if( !empty($whereValue['operator'])  && '=' == $whereValue['operator'] &&
+                ($tablename.'.'.$value == $whereValue['column'] || $value == $whereValue['column'])){
+//                dump($whereValue['value']);
                 return $whereValue['value'];
             }
         }
