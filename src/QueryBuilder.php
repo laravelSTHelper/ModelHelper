@@ -297,7 +297,7 @@ class QueryBuilder extends Builder
 
     }
 
-    /**
+ /**
      * 清理缓存方法
      */
     private function cleanKeys(){
@@ -308,9 +308,11 @@ class QueryBuilder extends Builder
                     || false !== stripos($value, '?')
                 )
             ){
-                $keyArr = Cache::getRedis()->keys($value);
+                $redisCacheKey = Cache::getPrefix() . $value;
+                $keyArr = Cache::getRedis()->keys($redisCacheKey);
                 foreach((array)$keyArr as $k=>$v){
-                    Cache::forget($v);
+                    $forgetKey = str_replace(Cache::getPrefix(), '', $v);
+                    Cache::forget($forgetKey);
                 }
             }
             Cache::forget($value);
