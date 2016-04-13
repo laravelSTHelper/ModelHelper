@@ -19,6 +19,8 @@ composer require  hbclare/model-helper:dev-master
 在porviders里面，增加        'Hbclare\ModelHelper\ModelHelperServiceProvider',
 ```
 
+####2.artisan方法，生成程序
+
 假设我们有一个user表
 |字段|说明|
 ------------ | ------------- 
@@ -28,7 +30,20 @@ composer require  hbclare/model-helper:dev-master
  nickname|昵称
  ...|...
 
-####2.在model中，通过简单的设置，则可以实现透明的原子化缓存
+```
+php artisan make:eachmodel Models/User
+```
+会在/app/Models 下生成User的model类
+```
+php artisan make:repository Repository/UserRepository
+```
+会在/app/Repository 下生成UserRepository类
+同时会在 /app/RepositoryInterface 目录下，生成UserRepositoryInterface类
+
+####3.在model中，通过简单的设置，则可以实现透明的原子化缓存
+
+
+
 ```php
 <?php
 namespace App\Models\Desktop;
@@ -60,7 +75,7 @@ class User extends Model
 > 什么是原子化缓存?
 > 对应于原子化操作的定义，对一条不可在细分数据的缓存就是原子化缓存，通俗点说，就是对表的行数据的缓存
 
-####3.可以对较复杂的Model层操作，快速的进行缓存，同时对于该缓存key的设计，可以自动的进行缓存更新操作
+####4.可以对较复杂的Model层操作，快速的进行缓存，同时对于该缓存key的设计，可以自动的进行缓存更新操作
 >key 支持多种通配处理：
 	*如 user_info_{id},括号中的id,对应的就是表中的字段，如果 where 条件中有 id=12这样的条件，就会将key变成 user_info_12
     *一个key里面可以包含多个{},如: user_info_type_{type}_id_{id}
@@ -100,14 +115,35 @@ class User extends Model
 	
 ```
 
-####4. 提供Artisan方法
+####5. 提供常用sql封装方法，方便代码书写
+#####a. findOne：查找一条数据     
+>param array $where eg:['id'=>1,'fild'=>2]
+>param array $orderBy eg：['id'=>'desc']
+```php
+User->findOne(['username'=>'testname'], ['age'=>'desc']);
 ```
-php artisan make:eachmodel Models/User
+#####b. getOne：通过主键查找数据   
+```php
+User->getOne($id);
 ```
-会在/app/Models 下生成User的model类
+
+#####c. getList：通过列表数据   
+>param array $where
+>param array $orderBy eg：['id'=>'desc']
+>param null $limit
+```php
+User->getList(['age'=>10], ['sex'=>'desc'], 10);
 ```
-php artisan make:repository Repository/User
-```
-会在/app/Repository 下生成User的Repository类
->目前，仅仅是为了将Controller层与Model层隔开，在中间增加一层Repository
+
+#####d. getPaginateList:获取分页列表数据
+
+#####e. saveInfo:保存/修改方法
+
+#####f. delCleanCache: 条件删除，同时删除自动生成的缓存
+>执行流程是，先查找出id，再按照id删除
+
+#####g. del:根据条件删除数据
+>直接删除
+
+
 

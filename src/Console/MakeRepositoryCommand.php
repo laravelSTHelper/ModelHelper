@@ -31,10 +31,13 @@ class MakeRepositoryCommand extends GeneratorCommand
 //        parent::__construct();
 //    }
 
-    public function getStub()
+    public function getStub($interface)
     {
-        // TODO: Implement getStub() method.
-        return __DIR__ . '/stubs/repository.stub';
+        if(!empty($interface)){
+            return __DIR__ . '/stubs/repositoryinterface.stub';
+        }else{
+            return __DIR__ . '/stubs/repository.stub';
+        }
     }
 
     /**
@@ -44,8 +47,38 @@ class MakeRepositoryCommand extends GeneratorCommand
      */
     public function handle()
     {
-        $modelName = $this->argument('repositoryName');
+        $repositoryName = $this->argument('repositoryName');
 
-        parent::handel($modelName);
+        $repositoryNameInterface = $this->createInterface($repositoryName);
+        $this->type = $repositoryName;
+        parent::handel($repositoryName);
+        $this->type = $repositoryNameInterface;
+        parent::handel($repositoryNameInterface, 1);
     }
+
+    /**
+     * @param $repositoryName
+     * @return string
+     */
+    public function createInterface($repositoryName){
+        if(false == stripos($repositoryName, '/')){
+            $repositoryInterfaceName = $repositoryName.'Interface';
+        }else{
+            $nameArr = explode('/', $repositoryName);
+            $arrCount = count($nameArr);
+            $repositoryInterfaceName = '';
+            foreach($nameArr as $key => $value){
+                $repositoryInterfaceName .= $value;
+                if($arrCount - 1 == $key || 0 == $key ){
+                    $repositoryInterfaceName .= 'Interface';
+                }
+                $repositoryInterfaceName .= '/';
+            }
+        }
+        $repositoryInterfaceName = substr($repositoryInterfaceName, 0, -1);
+        return $repositoryInterfaceName;
+    }
+
+
+
 }

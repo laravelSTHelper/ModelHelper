@@ -2,6 +2,6 @@
 namespace DummyNamespace;
 use Hbclare\ModelHelper\BaseRepository;
 
-class DummyClass extends BaseRepository {
+class DummyClass extends BaseRepository Implements  DummyClassInterface{
 
 }

@@ -193,14 +193,17 @@ abstract class Model extends EloquentModel
      * @param array $orderBy eg：['id'=>'desc']
      * @param null $limit
      */
-    public function getList($where, $orderBy = [], $limit = null)
+    public function getList($where, $orderBy = [], $take = null, $skip = null)
     {
         $queryObj = $this->formatWhere($where);
         if (!empty($orderBy)) {
             $queryObj = $this->formatOrderBy($queryObj, $orderBy);
         }
-        if (!empty($limit)) {
-            $queryObj->take($limit);
+        if (!empty($take)) {
+            $queryObj->take($take);
+        }
+        if (!empty($skip)) {
+            $queryObj->skip($skip);
         }
         return $queryObj->get();
     }
@@ -231,7 +234,11 @@ abstract class Model extends EloquentModel
         $queryObj = $this->where(function ($query) use ($where) {
             if (!empty($where)) {
                 foreach ($where as $key => $value) {
-                    $query->where($key, $value);
+                    if(is_array($value)){
+                        $query->where($key, $value[0], $value[1]);
+                    }else{
+                        $query->where($key, $value);
+                    }
                 }
             }
         });
@@ -301,4 +308,11 @@ abstract class Model extends EloquentModel
         return $this->formatWhere($where)->delete();
     }
 
+    /**
+     * 根据条件计算条数
+     * @return mixed
+     */
+    public function getCount($where){
+        return $this->formatWhere($where)->count();
+    }
 }

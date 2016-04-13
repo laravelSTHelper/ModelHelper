@@ -47,7 +47,7 @@ abstract class GeneratorCommand extends Command
      *
      * @return void
      */
-    public function handel($name)
+    public function handel($name, $interface='')
     {
         $name = $this->parseName($name);
         if ($this->files->exists($path = $this->getPath($name))) {
@@ -58,7 +58,7 @@ abstract class GeneratorCommand extends Command
 
         $this->makeDirectory($path);
 
-        $this->files->put($path, $this->buildClass($name));
+        $this->files->put($path, $this->buildClass($name, $interface));
 
         $this->info($this->type . ' created successfully.');
     }
@@ -137,9 +137,9 @@ abstract class GeneratorCommand extends Command
      * @param  string $name
      * @return string
      */
-    protected function buildClass($name)
+    protected function buildClass($name, $interface='')
     {
-        $stub = $this->files->get($this->getStub());
+        $stub = $this->files->get($this->getStub($interface));
 
         return $this->replaceNamespace($stub, $name)->replaceClass($stub, $name);
     }
@@ -149,7 +149,7 @@ abstract class GeneratorCommand extends Command
      *
      * @return string
      */
-    abstract protected function getStub();
+    abstract protected function getStub($interface);
 
     /**
      * Replace the class name for the given stub.
@@ -164,6 +164,7 @@ abstract class GeneratorCommand extends Command
 
         return str_replace('DummyClass', $class, $stub);
     }
+
 
     /**
      * Get the full namespace name for a given class.
