@@ -31,7 +31,7 @@ class MakeEachModelCommand extends GeneratorCommand
 //        parent::__construct();
 //    }
 
-    public function getStub()
+    public function getStub($interface)
     {
         // TODO: Implement getStub() method.
         return __DIR__ . '/stubs/eachmodel.stub';
@@ -45,7 +45,7 @@ class MakeEachModelCommand extends GeneratorCommand
     public function handle()
     {
         $modelName = $this->argument('eachModelName');
-
+        $this->type = $modelName;
         parent::handel($modelName);
     }
 }
