@@ -292,7 +292,8 @@ abstract class Model extends EloquentModel
             return FALSE;
         }
         foreach ($data as $val) {
-            $this->destroy($val->id);
+            $primaryKey = $this->primaryKey();
+            $this->del([$primaryKey => $val->$primaryKey]);
         }
         return TRUE;
     }
