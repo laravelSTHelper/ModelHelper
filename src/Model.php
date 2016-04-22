@@ -17,6 +17,9 @@ abstract class Model extends EloquentModel
     //需要清理的缓存名字
     protected $flushKey = array();
 
+    //修改的值
+    protected $columnsArr = array();
+
 
     //开启自动原子化缓存
     protected function startAutoEachCache()
@@ -35,6 +38,23 @@ abstract class Model extends EloquentModel
         return $this->autoEachCache;
     }
 
+    //设置/读取 更新时候的值
+    public function setColumnsArr(array $columnsArr)
+    {
+        $this->columnsArr = $columnsArr;
+    }
+
+    public function getColumnsArr()
+    {
+        return $this->columnsArr;
+    }
+
+    public function cleanColumnsArr()
+    {
+        unset($this->columnsArr);
+        return true;
+    }
+
     /*
      * insert以后，需要自动执行清理缓存，支持数组
      * key 支持通配符处理，
@@ -48,6 +68,11 @@ abstract class Model extends EloquentModel
     protected $afterUpdateFlushKey = array();
     //delete以后，自动执行清理缓存key数组
     protected $afterDeleteFlushKey = array();
+
+    public function __construct(array $attributes)
+    {
+        parent::__construct($attributes);
+    }
 
     //设置/读取 需设置缓存key
     public function setCacheKeys($key)
@@ -234,9 +259,9 @@ abstract class Model extends EloquentModel
         $queryObj = $this->where(function ($query) use ($where) {
             if (!empty($where)) {
                 foreach ($where as $key => $value) {
-                    if(is_array($value)){
+                    if (is_array($value)) {
                         $query->where($key, $value[0], $value[1]);
-                    }else{
+                    } else {
                         $query->where($key, $value);
                     }
                 }
@@ -267,17 +292,41 @@ abstract class Model extends EloquentModel
     //通用保存类方法
     public function saveInfo($saveArr)
     {
+        $flush = $this->getFlushKeys();
+        $afterInsterFlush = $this->getAfterInsertFlushKey();
         //不存在主键，是新建
         if (empty($saveArr[$this->primaryKey])) {
-            return $this::create($saveArr);
+            return $this::create([
+                'saveArr' => $saveArr,
+                'flush' => $flush,
+                'afterInsterFlush' => $afterInsterFlush,
+            ]);
         } else {
             //否则是修改
             $pkValue = $saveArr[$this->primaryKey];
             unset($saveArr[$this->primaryKey]);
-            return $this::where($this->primaryKey, $pkValue)
+            return $this->formatWhere([$this->primaryKey => $pkValue])
                 ->update($saveArr);
         }
     }
+
+    public static function create(array $attributes = [])
+    {
+        $attributeArr = !empty($attributes['saveArr']) ? $attributes['saveArr'] : $attributes;
+        $model = new static($attributeArr);
+
+        if (!empty($attributes['afterInsterFlush'])) {
+            $model->setAfterInsertFlushKey($attributes['afterInsterFlush']);
+        }
+        if (!empty($attributes['flush'])) {
+            $model->setFlushKeys($attributes['flush']);
+        }
+
+        $model->save();
+
+        return $model;
+    }
+
 
     /**
      * 删除数据，一条条根据逐渐删除
@@ -313,7 +362,8 @@ abstract class Model extends EloquentModel
      * 根据条件计算条数
      * @return mixed
      */
-    public function getCount($where){
+    public function getCount($where)
+    {
         return $this->formatWhere($where)->count();
     }
 }
