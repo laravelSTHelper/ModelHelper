@@ -84,6 +84,7 @@ class QueryBuilder extends Builder
         $realWhereAutoFlushKey = $this->formatAutoKey4Where($autoFlush);
         //通过修改结果值条件替换
         $realColumnsAutoFlushKey = $this->formatAutoKey4Columns($autoFlush);
+
         $autoEachCache = [];
         if( true === $this->model->getAutoEachCache() && 'i' !== $type){#透明处理
             $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
@@ -311,7 +312,9 @@ class QueryBuilder extends Builder
         //dump($result);
         foreach($result[1] as $key => $value){
             if('where' == $type){
+
                 $findValue = $this->findWhereValue($value);
+
             }else{
                 $findValue = $this->findColumnsValue($value);
             }

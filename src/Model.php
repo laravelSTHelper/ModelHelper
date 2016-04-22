@@ -305,7 +305,7 @@ abstract class Model extends EloquentModel
             //否则是修改
             $pkValue = $saveArr[$this->primaryKey];
             unset($saveArr[$this->primaryKey]);
-            return $this->formatWhere([$this->primaryKey => $pkValue])
+            return $this::where($this->primaryKey, $pkValue)
                 ->update($saveArr);
         }
     }
