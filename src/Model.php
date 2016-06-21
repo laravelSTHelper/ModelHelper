@@ -300,6 +300,7 @@ abstract class Model extends EloquentModel
                 'saveArr' => $saveArr,
                 'flush' => $flush,
                 'afterInsterFlush' => $afterInsterFlush,
+                'table' => $this->getTable()
             ]);
         } else {
             //否则是修改
@@ -315,6 +316,10 @@ abstract class Model extends EloquentModel
         $attributeArr = !empty($attributes['saveArr']) ? $attributes['saveArr'] : $attributes;
         $model = new static($attributeArr);
 
+        if (!empty($attributes['table'])) {
+            $model->setTable($attributes['table']);
+        }
+        
         if (!empty($attributes['afterInsterFlush'])) {
             $model->setAfterInsertFlushKey($attributes['afterInsterFlush']);
         }
