@@ -307,6 +307,7 @@ abstract class Model extends EloquentModel
         $afterInsterFlush = $this->getAfterInsertFlushKey();
         //不存在主键，是新建
         if (empty($saveArr[$this->primaryKey])) {
+			//因为create里面的class与当前class不是同一个对象，把一些需要的参数，传过去
             return $this::create([
                 'saveArr' => $saveArr,
                 'flush' => $flush,
