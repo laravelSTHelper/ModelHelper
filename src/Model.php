@@ -260,7 +260,18 @@ abstract class Model extends EloquentModel
             if (!empty($where)) {
                 foreach ($where as $key => $value) {
                     if (is_array($value)) {
-                        $query->where($key, $value[0], $value[1]);
+                        switch(strtolower($value[0])){
+                            case 'in':
+                                $query->whereIn($key,$value[1]);break; //$value[1]为数组，示例：['a','b','c']
+                            case 'notin':
+                                $query->whereNotIn($key,$value[1]);break;
+                            case 'between':
+                                $query->whereBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
+                            case 'notbetween':
+                                $query->whereNotBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
+                            default:
+                                $query->where($key, $value[0], $value[1]);break;
+                        }
                     } else {
                         $query->where($key, $value);
                     }
@@ -306,7 +317,7 @@ abstract class Model extends EloquentModel
             //否则是修改
             $pkValue = $saveArr[$this->primaryKey];
             unset($saveArr[$this->primaryKey]);
-            return $this->formatWhere([$this->primaryKey => $pkValue])
+            return $this::where($this->primaryKey, $pkValue)
                 ->update($saveArr);
         }
     }
