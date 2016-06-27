@@ -1,6 +1,7 @@
 <?php
 namespace DummyNamespace;
 use Hbclare\ModelHelper\BaseRepository;
+use App\RepositoryInterface\DummyClassInterface;
 
 class DummyClass extends BaseRepository Implements  DummyClassInterface{
 
