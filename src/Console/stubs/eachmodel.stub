@@ -5,17 +5,17 @@ namespace DummyNamespace;
 use Hbclare\ModelHelper\Model;
 
 class DummyClass extends Model {
-    //ÉèÖÃ±íÃû
+    //è®¾ç½®è¡¨å
     protected $table = '';
 
-    //ÉèÖÃÐÞ¸Ä×Ö¶Î
+    //è®¾ç½®ä¿®æ”¹å­—æ®µ
     protected $fillable = [
     ];
 
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->startAutoEachCache(120);#ÉèÖÃ120·ÖÖÓ»º´æ
+        $this->startAutoEachCache(120);#è®¾ç½®120åˆ†é’Ÿç¼“å­˜
     }
 
 }
