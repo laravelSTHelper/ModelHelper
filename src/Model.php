@@ -383,4 +383,9 @@ abstract class Model extends EloquentModel
     {
         return $this->formatWhere($where)->count();
     }
+
+	public function getSum($where, $field)
+	{
+        return $this->formatWhere($where)->sum($field);
+	}
 }
