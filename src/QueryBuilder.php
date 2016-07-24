@@ -347,6 +347,18 @@ class QueryBuilder extends Builder
 //                dump($whereValue['value']);
                 return $whereValue['value'];
             }
+
+            if (!empty($whereValue['query']->wheres)) {
+                foreach ($whereValue['query']->wheres as $wheresKey => $wheresValue) {
+                    if (!empty($wheresValue['operator']) && '=' == $wheresValue['operator'] &&
+                        ($tablename . '.' . $value == $wheresValue['column'] || $value == $wheresValue['column'])
+                    ) {
+                        return $wheresValue['value'];
+                    }
+
+                }
+
+            }
         }
         return false;
 
