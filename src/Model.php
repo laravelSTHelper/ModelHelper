@@ -388,4 +388,14 @@ abstract class Model extends EloquentModel
 	{
         return $this->formatWhere($where)->sum($field);
 	}
+
+	public function getMax($where, $field)
+	{
+        return $this->formatWhere($where)->max($field);
+	}
+	
+	public function getMin($where, $field)
+	{
+        return $this->formatWhere($where)->min($field);
+	}
 }
