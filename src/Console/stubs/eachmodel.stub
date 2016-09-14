@@ -12,6 +12,9 @@ class DummyClass extends Model {
     protected $fillable = [
     ];
 
+    //关闭自动更新时间戳
+    #public $timestamps = false;
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);

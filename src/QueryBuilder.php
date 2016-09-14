@@ -133,10 +133,10 @@ class QueryBuilder extends Builder
         or array_key_exists('Sub', $this->wheres)
         or array_key_exists('raw', $this->wheres);
     }
+
     /**
-     * 「简单查询」就是只根据主键过滤结果集的查询，有以下两种形式：
-     * 1. select * from foo where id = 1;
-     * 2. select * from foo where id in (1, 2, 3);
+     * 「原子查询」就是只根据主键过滤结果集的查询，仅有以下形式：
+     * select * from foo where id = 1;
      */
     private function isSimple()
     {
@@ -165,7 +165,7 @@ class QueryBuilder extends Builder
         }
 
         if ($where['type'] === 'In') {
-            return true;
+            return false;
         }
 
         if ($where['type'] === 'Basic') {
