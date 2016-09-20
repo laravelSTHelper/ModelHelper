@@ -291,7 +291,7 @@ abstract class Model extends EloquentModel
     {
         if (is_array($orderBy)) {
             foreach ($orderBy as $key => $value) {
-                if ($value !== 'desc' && $value !== 'asc') {
+                if ( strtolower($value) !== 'desc' && strtolower($value) !== 'asc') {
                     continue;
                 }
                 $queryObj->orderBy($key, $value);
