@@ -269,8 +269,8 @@ abstract class Model extends EloquentModel
                                 $query->whereBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
                             case 'notbetween':
                                 $query->whereNotBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
-							case 'raw':
-                                $query->whereRaw($value[1]);break;//$value[1]为字符串，示例：(`column_id` = '0102' or `column_id` = 'ALL')
+                            case 'raw':
+                                $query->whereRaw($value[1]);break;//$value[1]为字符串，示例：(`column_id` = '0102' or `column_id` = 'ALL' and `start_time` <> 0)
                             default:
                                 $query->where($key, $value[0], $value[1]);break;
                         }
