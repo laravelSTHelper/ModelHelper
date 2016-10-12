@@ -218,9 +218,9 @@ abstract class Model extends EloquentModel
      * @param array $orderBy eg：['id'=>'desc']
      * @param null $limit
      */
-    public function getList($where, $orderBy = [], $take = null, $skip = null)
+	public function getList($where, $orderBy = [], $take = null, $skip = null ,$fields = '*')
     {
-        $queryObj = $this->formatWhere($where);
+        $queryObj = $this->formatWhere($where)->select($fields);
         if (!empty($orderBy)) {
             $queryObj = $this->formatOrderBy($queryObj, $orderBy);
         }
