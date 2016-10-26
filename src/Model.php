@@ -381,9 +381,9 @@ abstract class Model extends EloquentModel
      * 根据条件计算条数
      * @return mixed
      */
-    public function getCount($where)
+    public function getCount($where, $field=1)
     {
-        return $this->formatWhere($where)->count();
+        return $this->formatWhere($where)->count($field);
     }
 
 	public function getSum($where, $field)
