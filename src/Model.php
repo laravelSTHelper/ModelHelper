@@ -260,7 +260,19 @@ abstract class Model extends EloquentModel
         }
         return $queryObj->paginate($pageNum);
     }
-
+    /**
+     * 获取分页列表数据高级方法
+     * @param $where
+     * @param array $orderBy
+     * @param $pageNum
+     * @return mixed
+     */
+    public function getPaginateListUpgraded($where, $pageNum = 20, $predicate, $fields='*')
+    {
+        $queryObj = $this->formatWhere($where)->select($fields);
+        $queryObj = $this->formatPredicate($queryObj, $predicate);
+        return $queryObj->paginate($pageNum);
+    }
     /**
      * 格式化谓词数组为orm
      * @param $queryObj
