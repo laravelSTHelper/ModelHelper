@@ -234,6 +234,18 @@ abstract class Model extends EloquentModel
     }
 
     /**
+     * 高级List方法，一般用来统计
+     * @param $where
+     * @param $predicate
+     * @param string $fields
+     * @return mixed
+     */
+    public function getListUpgraded($where, $predicate, $fields='*'){
+        $queryObj = $this->formatWhere($where)->select($fields);
+        $queryObj = $this->formatPredicate($queryObj, $predicate);
+        return $queryObj->get();
+    }
+    /**
      * 获取分页列表数据
      * @param $where
      * @param array $orderBy
@@ -247,6 +259,34 @@ abstract class Model extends EloquentModel
             $queryObj = $this->formatOrderBy($queryObj, $orderBy);
         }
         return $queryObj->paginate($pageNum);
+    }
+
+    /**
+     * 格式化谓词数组为orm
+     * @param $queryObj
+     * @param $predicate
+     * @return mixed
+     */
+    private function formatPredicate($queryObj, $predicate){
+        foreach($predicate as $key => $value){
+            $key = strtolower($key);
+            if( 'groupby' == $key ){# groupBy 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
+                $queryObj->groupBy($value);
+            }
+            if('having' == $key){#必须是数组[$column, $operator = null, $value = null, $boolean = 'and']
+                $queryObj->having($value[0], $value[1]??null, $value[2]??null, $value[3]??'and');
+            }
+            if( 'orderby' == $key ){# orderby 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
+                $queryObj = $this->formatOrderBy($queryObj, $value);
+            }
+            if ( 'take' == $key) {
+                $queryObj->take($value);
+            }
+            if ( 'skip' == $key) {
+                $queryObj->skip($value);
+            }
+        }
+        return $queryObj;
     }
 
     /**
