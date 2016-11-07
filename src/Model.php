@@ -286,7 +286,7 @@ abstract class Model extends EloquentModel
                 $queryObj->groupBy($value);
             }
             if('having' == $key){#必须是数组[$column, $operator = null, $value = null, $boolean = 'and']
-                $queryObj->having($value[0], $value[1]??null, $value[2]??null, $value[3]??'and');
+                $queryObj->having($value[0], is_set($value[1])?$value[1]:null, is_set($value[2])?$value[2]:null, is_set($value[3])?$value[3]:'and');
             }
             if( 'orderby' == $key ){# orderby 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
                 $queryObj = $this->formatOrderBy($queryObj, $value);
