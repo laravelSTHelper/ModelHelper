@@ -291,11 +291,11 @@ abstract class Model extends EloquentModel
             if( 'orderby' == $key ){# orderby 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
                 $queryObj = $this->formatOrderBy($queryObj, $value);
             }
-            if ( 'take' == $key) {
-                $queryObj->take($value);
-            }
-            if ( 'skip' == $key) {
+            if ( 'skip' == $key) {#起始值，从0开始
                 $queryObj->skip($value);
+            }
+            if ( 'take' == $key) {#获得的条数
+                $queryObj->take($value);
             }
         }
         return $queryObj;
