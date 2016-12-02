@@ -2,7 +2,9 @@
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Schema\Blueprint;
+use Cache;
 
 abstract class Model extends EloquentModel
 {
@@ -11,19 +13,28 @@ abstract class Model extends EloquentModel
 
     //是否开启默透明缓存
     protected $autoEachCache = false;
+    protected $autoEachCacheTime;
+
+    //是否开启自动分页缓存
+    protected $autoPageCache = false;
+    //默认缓存，30分钟
+    protected $autoPageCacheTime;
 
     //需要缓存的key，在一次get()流程中生效
     protected $cacheKey = '';
+    //需要缓存的key，在一次get()流程中生效
+    protected $cacheWithKey = '';
     //需要清理的缓存名字
     protected $flushKey = array();
-
     //修改的值
     protected $columnsArr = array();
 
 
     //开启自动原子化缓存
-    protected function startAutoEachCache()
+    //默认缓存30分钟
+    protected function startAutoEachCache($cacheTime=30)
     {
+        $this->autoEachCacheTime = $cacheTime;
         $this->autoEachCache = true;
     }
 
@@ -33,9 +44,54 @@ abstract class Model extends EloquentModel
         $this->autoEachCache = false;
     }
 
+    //开启自动分页缓存
+    //默认缓存5分钟
+    protected function startAutoPageCache($cacheTime=5)
+    {
+        $this->autoPageCacheTime = $cacheTime;
+        $this->autoPageCache = true;
+    }
+
+    //关闭自动分页缓存
+    protected function stopAutoPageCache()
+    {
+        $this->autoPageCache = false;
+    }
+    //得到原子化缓存状态
     public function getAutoEachCache()
     {
         return $this->autoEachCache;
+    }
+
+    //得到原子化缓存时间
+    public function getAutoEachCacheTime()
+    {
+        return $this->autoEachCacheTime;
+    }
+
+    //得到分页缓存状态
+    public function getAutoPageCache()
+    {
+        return $this->autoPageCache;
+    }
+    //得到分页缓存时间
+    public function getAutoPageCacheTime()
+    {
+        return $this->autoPageCacheTime;
+    }
+    //等到分页缓存版本存储key
+    public function getPageCacheVerKey(){
+        return 'pageCacheVer_'.$this->table();
+    }
+    //得到分页缓存版本
+    public function getPageCacheVer(){
+        $pageVersionKey = $this->getPageCacheVerKey();
+        if(!Cache::has($pageVersionKey)){
+            $pageCacheVer = 1;
+        }else{
+            $pageCacheVer = Cache::get($pageVersionKey);
+        }
+        return $pageCacheVer;
     }
 
     //设置/读取 更新时候的值
@@ -86,7 +142,6 @@ abstract class Model extends EloquentModel
     }
 
     //设置/读取 需删除缓存key
-    //需删除缓存，在redis驱动下，支持*,?通配符匹配批量删除
     public function setFlushKeys($key)
     {
         !is_array($key) ?
@@ -163,22 +218,17 @@ abstract class Model extends EloquentModel
         return $this->table;
     }
 
-    protected function newBaseQueryBuilder()
-    {
-        $conn = $this->getConnection();
-        $grammar = $conn->getQueryGrammar();
-
-        $queryBuilder = new QueryBuilder(
-            $conn, $grammar, $conn->getPostProcessor());
-        //将Model对象传入QueryBuilder
-        $queryBuilder->setModel($this);
-
-        return $queryBuilder;
+    //返回外键值
+    public function foreignKey(){
+        if(empty($this->foreignKeyArr)){
+            return array();
+        }
+        return $this->foreignKeyArr;
     }
 
     public function newEloquentBuilder($query)
     {
-        $builder = new Builder($query);
+        $builder = new HelperQueryBuilder($query);
 
 //        $builder->macro('key', function (Builder $builder) {
 //            return $builder->getQuery()->key();
@@ -191,213 +241,40 @@ abstract class Model extends EloquentModel
         return $builder;
     }
 
-    /**
-     * 查找一条数据
-     * @param array $where eg:['id'=>1,'fild'=>2]
-     * @param array $orderBy eg：['id'=>'desc']
-     * @return mixed
-     */
-    public function findOne(array $where, $orderBy = [])
-    {
-        $queryObj = $this->formatWhere($where);
-        if (!empty($orderBy)) {
-            $queryObj = $this->formatOrderBy($queryObj, $orderBy);
-        }
-        return $queryObj->first();
-    }
-
-    //通过主键查内容
-    public function getOne($id)
-    {
-        return $this->find($id);
-    }
-
-    /**
-     * 获取列表数据
-     * @param array $where
-     * @param array $orderBy eg：['id'=>'desc']
-     * @param null $limit
-     */
-	public function getList($where, $orderBy = [], $take = null, $skip = null ,$fields = '*')
-    {
-        $queryObj = $this->formatWhere($where)->select($fields);
-        if (!empty($orderBy)) {
-            $queryObj = $this->formatOrderBy($queryObj, $orderBy);
-        }
-        if (!empty($take)) {
-            $queryObj->take($take);
-        }
-        if (!empty($skip)) {
-            $queryObj->skip($skip);
-        }
-        return $queryObj->get();
-    }
-
-    /**
-     * 高级List方法，一般用来统计
-     * @param $where
-     * @param $predicate
-     * @param string $fields
-     * @return mixed
-     */
-    public function getListUpgraded($where, $predicate, $fields='*'){
-        $queryObj = $this->formatWhere($where)->select($fields);
-        $queryObj = $this->formatPredicate($queryObj, $predicate);
-        return $queryObj->get();
-    }
-    /**
-     * 获取分页列表数据
-     * @param $where
-     * @param array $orderBy
-     * @param $pageNum
-     * @return mixed
-     */
-    public function getPaginateList($where, $orderBy = [], $pageNum = 20)
-    {
-        $queryObj = $this->formatWhere($where);
-        if (!empty($orderBy)) {
-            $queryObj = $this->formatOrderBy($queryObj, $orderBy);
-        }
-        return $queryObj->paginate($pageNum);
-    }
-    /**
-     * 获取分页列表数据高级方法
-     * @param $where
-     * @param array $orderBy
-     * @param $pageNum
-     * @return mixed
-     */
-    public function getPaginateListUpgraded($where, $pageNum = 20, $predicate, $fields='*')
-    {
-        $queryObj = $this->formatWhere($where)->select($fields);
-        $queryObj = $this->formatPredicate($queryObj, $predicate);
-        return $queryObj->paginate($pageNum);
-    }
-    /**
-     * 格式化谓词数组为orm
-     * @param $queryObj
-     * @param $predicate
-     * @return mixed
-     */
-    private function formatPredicate($queryObj, $predicate){
-        foreach($predicate as $key => $value){
-            $key = strtolower($key);
-            if( 'groupby' == $key ){# groupBy 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
-                $queryObj->groupBy($value);
-            }
-            if('having' == $key){#必须是数组[$column, $operator = null, $value = null, $boolean = 'and']
-                $queryObj->having($value[0], is_set($value[1])?$value[1]:null, is_set($value[2])?$value[2]:null, is_set($value[3])?$value[3]:'and');
-            }
-            if( 'orderby' == $key ){# orderby 的 value,支持字符串 'name' ，或者数组 [ 'name', 'sex' ]
-                $queryObj = $this->formatOrderBy($queryObj, $value);
-            }
-            if ( 'skip' == $key) {#起始值，从0开始
-                $queryObj->skip($value);
-            }
-            if ( 'take' == $key) {#获得的条数
-                $queryObj->take($value);
-            }
-        }
-        return $queryObj;
-    }
-
-    /**
-     * 格式条件语句
-     * @param $where
-     * @return mixed
-     */
-    private function formatWhere($where)
-    {
-        $queryObj = $this->where(function ($query) use ($where) {
-            if (!empty($where)) {
-                foreach ($where as $key => $value) {
-                    if (is_array($value)) {
-                        switch(strtolower($value[0])){
-                            case 'in':
-                                $query->whereIn($key,$value[1]);break; //$value[1]为数组，示例：['a','b','c']
-                            case 'notin':
-                                $query->whereNotIn($key,$value[1]);break;
-                            case 'between':
-                                $query->whereBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
-                            case 'notbetween':
-                                $query->whereNotBetween($key,$value[1]);break;//$value[1]为数组，示例：[$start_val,$end_val]
-                            case 'raw':
-                                $query->whereRaw($value[1]);break;//$value[1]为字符串，示例：(`column_id` = '0102' or `column_id` = 'ALL' and `start_time` <> 0)
-                            default:
-                                $query->where($key, $value[0], $value[1]);break;
-                        }
-                    } else {
-                        $query->where($key, $value);
-                    }
-                }
-            }
-        });
-        return $queryObj;
-    }
-
-    /**
-     * 格式排序语句
-     * @param $queryObj
-     * @param array $orderBy
-     * @return mixed
-     */
-    private function formatOrderBy($queryObj, $orderBy)
-    {
-        if (is_array($orderBy)) {
-            foreach ($orderBy as $key => $value) {
-                if ( strtolower($value) !== 'desc' && strtolower($value) !== 'asc') {
-                    continue;
-                }
-                $queryObj->orderBy($key, $value);
-            }
-        }
-        return $queryObj;
-    }
 
     //通用保存类方法
     public function saveInfo($saveArr)
     {
-        $flush = $this->getFlushKeys();
-        $afterInsterFlush = $this->getAfterInsertFlushKey();
-        //不存在主键，是新建
-        if (empty($saveArr[$this->primaryKey])) {
-			//因为create里面的class与当前class不是同一个对象，把一些需要的参数，传过去
-            return $this::create([
-                'saveArr' => $saveArr,
-                'flush' => $flush,
-                'afterInsterFlush' => $afterInsterFlush,
-                'table' => $this->getTable()
-            ]);
-        } else {
-            //否则是修改
-            $pkValue = $saveArr[$this->primaryKey];
-            unset($saveArr[$this->primaryKey]);
-            return $this::where($this->primaryKey, $pkValue)
-                ->update($saveArr);
+        if(!empty($saveArr[$this->primaryKey])){
+            $keyArr[$this->primaryKey] = $saveArr[$this->primaryKey];
+            $this->setRawAttributes($keyArr, true);
+            $this->exists = true;
+            //unset($saveArr[$this->primaryKey]);
         }
+        $this->fill($saveArr);
+        return parent::save($saveArr);
     }
 
-    public static function create(array $attributes = [])
-    {
-        $attributeArr = !empty($attributes['saveArr']) ? $attributes['saveArr'] : $attributes;
-        $model = new static($attributeArr);
-
-        if (!empty($attributes['table'])) {
-            $model->setTable($attributes['table']);
-        }
-        
-        if (!empty($attributes['afterInsterFlush'])) {
-            $model->setAfterInsertFlushKey($attributes['afterInsterFlush']);
-        }
-        if (!empty($attributes['flush'])) {
-            $model->setFlushKeys($attributes['flush']);
-        }
-
-        $model->save();
-
-        return $model;
-    }
-
+//    public static function create(array $attributes = [])
+//    {
+//        $attributeArr = !empty($attributes['saveArr']) ? $attributes['saveArr'] : $attributes;
+//        $model = new static($attributeArr);
+//
+//        if (!empty($attributes['table'])) {
+//            $model->setTable($attributes['table']);
+//        }
+//
+//        if (!empty($attributes['afterInsterFlush'])) {
+//            $model->setAfterInsertFlushKey($attributes['afterInsterFlush']);
+//        }
+//        if (!empty($attributes['flush'])) {
+//            $model->setFlushKeys($attributes['flush']);
+//        }
+//
+//        $model->save();
+//
+//        return $model;
+//    }
 
     /**
      * 删除数据，一条条根据逐渐删除
@@ -430,26 +307,10 @@ abstract class Model extends EloquentModel
     }
 
     /**
-     * 根据条件计算条数
-     * @return mixed
+     * 更新当前表的所有分页缓存
      */
-    public function getCount($where, $field='*')
-    {
-        return $this->formatWhere($where)->count($field);
+    public function flushPageCache(){
+        $pageVersionKey = $this->getPageCacheVerKey();
+        Cache::put($pageVersionKey, time(), rand(60, 600));#设置版本
     }
-
-	public function getSum($where, $field)
-	{
-        return $this->formatWhere($where)->sum($field);
-	}
-
-	public function getMax($where, $field)
-	{
-        return $this->formatWhere($where)->max($field);
-	}
-	
-	public function getMin($where, $field)
-	{
-        return $this->formatWhere($where)->min($field);
-	}
 }

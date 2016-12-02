@@ -8,9 +8,14 @@ class DummyClass extends Model {
     //设置表名
     protected $table = '';
 
-    //设置修改字段
-    protected $fillable = [
-    ];
+    //设置修改字段 修改了update方式，saveInfo不用配置
+    #protected $fillable = [
+    #];
+
+    //设置外键,自动对hasOne 和 hasMany进行缓存，时间配置同自动原子化缓存
+    #protected $foreignKeyArr = [
+    #    'game_id',
+    #];
 
     //关闭自动更新时间戳
     #public $timestamps = false;
@@ -18,7 +23,10 @@ class DummyClass extends Model {
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->startAutoEachCache(120);#设置120分钟缓存
+	//设置120分钟缓存
+        $this->startAutoEachCache(120);
+        //开启自动分页缓存，实验方法，暂时默认设置5分钟
+        $this->startAutoPageCache(5);
     }
 
 }
