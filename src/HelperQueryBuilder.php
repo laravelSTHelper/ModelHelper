@@ -327,7 +327,7 @@ class HelperQueryBuilder extends Builder
         #如果缓存不存在
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
-            //dd($Row);
+//            dd($Row);
             Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
             $this->_readKey = array();
             return $Row;
@@ -563,9 +563,9 @@ class HelperQueryBuilder extends Builder
      */
     public function getList($where, $orderBy = [], $take = null, $skip = null ,$fields = '*')
     {
-        $this->formatWhere($where, $query)->select($fields);
+        $this->formatWhere($where)->select($fields);
         if (!empty($orderBy)) {
-            $this->formatOrderBy($queryObj, $orderBy);
+            $this->formatOrderBy($orderBy);
         }
         if (!empty($take)) {
             $this->take($take);
@@ -599,7 +599,7 @@ class HelperQueryBuilder extends Builder
     {
         $this->formatWhere($where);
         if (!empty($orderBy)) {
-            $this->formatOrderBy($queryObj, $orderBy);
+            $this->formatOrderBy($orderBy);
         }
         return $this->paginate($pageNum);
     }
