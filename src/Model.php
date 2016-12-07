@@ -22,8 +22,6 @@ abstract class Model extends EloquentModel
 
     //需要缓存的key，在一次get()流程中生效
     protected $cacheKey = '';
-    //需要缓存的key，在一次get()流程中生效
-    protected $cacheWithKey = '';
     //需要清理的缓存名字
     protected $flushKey = array();
     //修改的值
@@ -247,9 +245,12 @@ abstract class Model extends EloquentModel
     {
         if(!empty($saveArr[$this->primaryKey])){
             $keyArr[$this->primaryKey] = $saveArr[$this->primaryKey];
-            $this->setRawAttributes($keyArr, true);
+            $this->setRawAttributes($keyArr, true);#刻意将主键传给syncOriginal
             $this->exists = true;
             //unset($saveArr[$this->primaryKey]);
+        }else{
+            $this->setRawAttributes($saveArr, true);#刻意将主键不给syncOriginal
+            $this->exists = false;
         }
         $this->fill($saveArr);
         return parent::save($saveArr);
