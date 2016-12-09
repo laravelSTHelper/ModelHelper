@@ -8,9 +8,9 @@ class DummyClass extends Model {
     //设置表名
     protected $table = '';
 
-    //设置修改字段 修改了update方式，saveInfo不用配置
-    #protected $fillable = [
-    #];
+    //设置修改字段
+    protected $fillable = [
+    ];
 
     //设置外键,自动对hasOne 和 hasMany进行缓存，时间配置同自动原子化缓存
     #protected $foreignKeyArr = [
