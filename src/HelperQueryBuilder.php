@@ -613,12 +613,11 @@ class HelperQueryBuilder extends Builder
     public function getPaginateListUpgraded($where, $pageNum = 20, $predicate, $fields='*')
     {
         $this->formatWhere($where)->select($fields);
-        $this->formatPredicate($queryObj, $predicate);
+        $this->formatPredicate($predicate);
         return $this->paginate($pageNum);
     }
     /**
      * 格式化谓词数组为orm
-     * @param $queryObj
      * @param $predicate
      * @return mixed
      */
@@ -680,7 +679,6 @@ class HelperQueryBuilder extends Builder
 
     /**
      * 格式排序语句
-     * @param $queryObj
      * @param array $orderBy
      * @return mixed
      */
