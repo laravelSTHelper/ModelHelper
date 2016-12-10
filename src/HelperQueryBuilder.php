@@ -583,7 +583,7 @@ class HelperQueryBuilder extends Builder
      * @param string $fields
      * @return mixed
      */
-    public function getListUpgraded($where, $predicate, $fields='*'){
+    public function getListUpgraded($where=[], $predicate=[], $fields='*'){
         $this->formatWhere($where)->select($fields);
         $this->formatPredicate($predicate);
         return $this->get();
