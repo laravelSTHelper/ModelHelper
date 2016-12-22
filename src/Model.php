@@ -289,9 +289,10 @@ abstract class Model extends EloquentModel
         if (empty($data) || $data->count() == 0) {
             return FALSE;
         }
+        $primaryKey = $this->primaryKey();
         foreach ($data as $val) {
-            $primaryKey = $this->primaryKey();
-            $this->del([$primaryKey => $val->$primaryKey]);
+            $where[$primaryKey] = $val->$primaryKey;
+            $this->del($where);
         }
         return TRUE;
     }

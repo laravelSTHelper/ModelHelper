@@ -137,10 +137,11 @@ class HelperQueryBuilder extends Builder
                     .$foreignKeyV.'_{'.$foreignKeyV.'}';
             }
         }
-        $realForeignKeyCache = $this->formatAutoKey4Columns($autoForeignKeyCache);#透明外键key，仅仅考虑参数情况
+        $realForeignKeyCache = $this->formatAutoKey4Columns($autoForeignKeyCache);#透明外键key，考虑参数情况
+        $realForeignKeyWhereCache = $this->formatAutoKey4Where($autoForeignKeyCache);#透明外键key，考虑where条件情况
         $realAutoEachCache = $this->formatAutoKey4Where($autoEachCache);#透明主键key，仅仅考虑where条件情况
 
-        $flushKey = array_merge($realWhereFlushKeyArr, $realColumnsFlushKeyArr, $realWhereAutoFlushKey, $realColumnsAutoFlushKey, $realForeignKeyCache, $realAutoEachCache);
+        $flushKey = array_merge($realWhereFlushKeyArr, $realColumnsFlushKeyArr, $realWhereAutoFlushKey, $realColumnsAutoFlushKey, $realForeignKeyCache, $realForeignKeyWhereCache, $realAutoEachCache);
         if( 0 == count($flushKey) ){
             return false;
         }
