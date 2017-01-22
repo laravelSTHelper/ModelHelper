@@ -329,7 +329,9 @@ class HelperQueryBuilder extends Builder
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
 //            dd($Row);
-            Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
+            if(!empty($Row)){
+                Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
+            }
             $this->_readKey = array();
             return $Row;
         }else{
