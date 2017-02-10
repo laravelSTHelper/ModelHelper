@@ -126,9 +126,11 @@ class HelperQueryBuilder extends Builder
 
         $autoForeignKeyCache = [];
         $autoEachCache = [];
-        if( true === $this->model->getAutoEachCache() && 'i' !== $type){#透明处理
-            $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
-                .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
+        if( true === $this->model->getAutoEachCache()){#透明处理
+            if( 'i' !== $type ){ //原子化缓存，插入不处理
+                $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
+                    .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
+            }
             #外键处理
             $foreignKeyArr = $this->model->foreignKey();
             $autoForeignKeyCache = [];

@@ -290,8 +290,13 @@ abstract class Model extends EloquentModel
             return FALSE;
         }
         $primaryKey = $this->primaryKey();
+        $foreignKeys = $this->foreignKey();
         foreach ($data as $val) {
             $where[$primaryKey] = $val->$primaryKey;
+            //外键也要处理
+            foreach ($foreignKeys as $foreignVal) {
+                $where[$foreignVal] = $val->$foreignVal;
+            }
             $this->del($where);
         }
         return TRUE;
