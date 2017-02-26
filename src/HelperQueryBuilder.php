@@ -1,6 +1,8 @@
 <?php namespace Hbclare\ModelHelper;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Cache;
 
 class HelperQueryBuilder extends Builder
@@ -308,22 +310,48 @@ class HelperQueryBuilder extends Builder
 
     }
 
-    //重写分页方法，如果model开启缓存，则缓存一下
-    public function forPage($page, $perPage = 15)
+    public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
     {
+        $total = $this->query->getCountForPagination();
+
+        #设置缓存时间
         if(empty($this->_readKey) && !empty($this->model->getAutoPageCache())){
-            $keyPre = 'autoPageCache_'.$this->toSql().json_encode($this->getBindings());
+            $keyPre = 'autoPageCache_'.md5($this->toSql().json_encode($this->getBindings()));
             $cacheKey = $keyPre.'_'.$this->model->getPageCacheVer().'_'.$keyPre.'_page_'
                 .$page.'_perpage_'.$perPage;
             //dd($cacheKey);
             $this->model->setCacheKeys($cacheKey);
-            #设置缓存时间
             Cache::setDefaultCacheTime($this->model->getAutoPageCacheTime());
-            return $this->skip(($page - 1) * $perPage)->take($perPage);
-        }else{
-            return $this->skip(($page - 1) * $perPage)->take($perPage);
         }
+
+        $this->query->forPage(
+            $page = $page ?: Paginator::resolveCurrentPage($pageName),
+            $perPage = $perPage ?: $this->model->getPerPage()
+        );
+
+        return new LengthAwarePaginator($this->get($columns), $total, $perPage, $page, [
+            'path' => Paginator::resolveCurrentPath(),
+            'pageName' => $pageName,
+        ]);
     }
+
+
+    //重写分页方法，如果model开启缓存，则缓存一下
+//    public function forPage($page, $perPage = 15)
+//    {
+//        if(empty($this->_readKey) && !empty($this->model->getAutoPageCache())){
+//            $keyPre = 'autoPageCache_'.$this->toSql().json_encode($this->getBindings());
+//            $cacheKey = $keyPre.'_'.$this->model->getPageCacheVer().'_'.$keyPre.'_page_'
+//                .$page.'_perpage_'.$perPage;
+//            //dd($cacheKey);
+//            $this->model->setCacheKeys($cacheKey);
+//            #设置缓存时间
+//            Cache::setDefaultCacheTime($this->model->getAutoPageCacheTime());
+//            return $this->skip(($page - 1) * $perPage)->take($perPage);
+//        }else{
+//            return $this->skip(($page - 1) * $perPage)->take($perPage);
+//        }
+//    }
 
     //使用带缓存的方式，执行sql操作
     public function getCacheQuery($columns){
@@ -346,6 +374,8 @@ class HelperQueryBuilder extends Builder
     //重写insert动作，让insert带上清理缓存的连带动作
     public function insert(array $values)
     {
+        $Row = parent::insert($values);
+
         $this->model->setColumnsArr($values);
         if ($this->needFlushCache('i')) {
             $this->cleanKeys();
@@ -355,7 +385,6 @@ class HelperQueryBuilder extends Builder
         if($this->model->getAutoPageCache()){
             $this->model->flushPageCache();
         }
-        $Row = parent::insert($values);
         return $Row;
     }
 
