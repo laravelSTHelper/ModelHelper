@@ -20,13 +20,7 @@ class ModelHelperServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-//        $this->publishes([
-//            __DIR__ . '/../../config/housekeeper.php' => config_path('housekeeper.php')
-//        ], 'config');
-//
-//        $this->mergeConfigFrom(
-//            __DIR__ . '/../../config/housekeeper.php', 'housekeeper'
-//        );
+
     }
 
     /**

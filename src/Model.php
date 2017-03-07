@@ -27,6 +27,17 @@ abstract class Model extends EloquentModel
     //修改的值
     protected $columnsArr = array();
 
+    //开启总缓存
+    protected function startCache()
+    {
+        $this->endisabledCache = true;
+    }
+
+    //关闭总缓存
+    protected function stopCache()
+    {
+        $this->endisabledCache = false;
+    }
 
     //开启自动原子化缓存
     //默认缓存30分钟
@@ -255,27 +266,6 @@ abstract class Model extends EloquentModel
         $this->fill($saveArr);
         return parent::save($saveArr);
     }
-
-//    public static function create(array $attributes = [])
-//    {
-//        $attributeArr = !empty($attributes['saveArr']) ? $attributes['saveArr'] : $attributes;
-//        $model = new static($attributeArr);
-//
-//        if (!empty($attributes['table'])) {
-//            $model->setTable($attributes['table']);
-//        }
-//
-//        if (!empty($attributes['afterInsterFlush'])) {
-//            $model->setAfterInsertFlushKey($attributes['afterInsterFlush']);
-//        }
-//        if (!empty($attributes['flush'])) {
-//            $model->setFlushKeys($attributes['flush']);
-//        }
-//
-//        $model->save();
-//
-//        return $model;
-//    }
 
     /**
      * 删除数据，一条条根据逐渐删除
