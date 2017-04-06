@@ -156,7 +156,7 @@ abstract class Model extends EloquentModel
         !is_array($key) ?
             $keyArr[] = $key :
             $keyArr = $key;
-        $this->flushKey = $keyArr;
+        $this->flushKey = array_merge($this->flushKey, $keyArr);
     }
 
     public function getFlushKeys()
@@ -255,7 +255,21 @@ abstract class Model extends EloquentModel
     public function saveInfo($saveArr)
     {
         if(!empty($saveArr[$this->primaryKey])){
+            //将主键传入syncOriginal
             $keyArr[$this->primaryKey] = $saveArr[$this->primaryKey];
+            //设置当前需要清理的外键缓存
+            $data = $this->formatWhere([$this->primaryKey=>$saveArr[$this->primaryKey]])->get();
+            $foreignKeys = $this->foreignKey();
+            //外键直接设置清理
+            foreach ($data as $val) {
+                foreach ($foreignKeys as $foreignVal) {
+                    if(!empty($val->$foreignVal)){
+                        $flushKey = 'autoForeignCache_'.$this->table().'_'
+                            .$foreignVal.'_'.$val->$foreignVal;
+                        $this->setFlushKeys($flushKey);
+                    }
+                }
+            }
             $this->setRawAttributes($keyArr, true);#刻意将主键传给syncOriginal
             $this->exists = true;
             //unset($saveArr[$this->primaryKey]);
