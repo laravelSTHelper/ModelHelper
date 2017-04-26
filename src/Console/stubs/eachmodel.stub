@@ -2,9 +2,9 @@
 
 namespace DummyNamespace;
 
-use Hbclare\ModelHelper\Model;
+use Eloquent;
 
-class DummyClass extends Model {
+class DummyClass extends Eloquent {
     //设置表名
     protected $table = '';
 

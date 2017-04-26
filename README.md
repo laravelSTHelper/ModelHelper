@@ -1,11 +1,20 @@
 # ModelHelper
 对laravel Eloquent OMR 的一层带缓存的封装
 
+版本|时间|说明
+---|---|--- 
+ V1.0|2016-11-30|1.增加了分页自动缓存 2.增加了hasOne,hasMany自动缓存（非with） 3. 修改了，model event 无法执行的bug 4. 修改了with预加载无法执行的bug
+ V1.1|2017-4-26|修改Model生成时的模板，支持idehelper，实现phpstrom的代码自动补全
+  
+## 注意
+1. 不能使用Eloquent ORM 中的软删除方法（use SoftDeletes）。这个设计与原子化缓存的思想设计有冲突
+2. 技术交流，请加qq群:370087262
 ## 封装的目的
 1. 在laravel的使用过程中，发现很多对model层缓存的透明化封装，而这些封装主要是对所有的sql语句进行了缓存，如果有数据的更新或者删除，则对数据进行了全部删除，做的好一些的，就是对表级数据，进行了删除。
 在实际使用过程中，特别是web类，面向用户的操作，更多的只是简单的select操作，如果我们将这些简单的select单条查询存入缓存，讲连表操作改成 select一张表中的数据list，然后foreach 该list，循环取另一张表的info类型，我们可以避免80%以上的连表操作。
 但是，这种做法，对缓存控制要求就很高了，对于缓存脏数据的清理，我们希望更精准，谁脏了，就干掉谁，而不是批量处理的做法，封装了此扩展。
 2. 自动缓存包含精准缓存的缓存删除操作。
+
 
 > 什么是原子化缓存?
 > 对应于原子化操作的定义，对一条不可在细分数据的缓存就是原子化缓存，通俗点说，就是对表的行数据的缓存
@@ -26,12 +35,28 @@
 >'Eloquent'  => 'Hbclare\ModelHelper\Model',
 >3. 在porviders里面，增加        'Hbclare\ModelHelper\ModelHelperServiceProvider',
 
+#### 2.phpstrom的idehelper生成
+>1.查看是否存在`app/ide-helper.php`文件，不存在则执行
+```php
+php7 artisan vendor:publish --provider="Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider" --tag=config
+```
+>2. 打开文件`config\ide-helper.php`
+```
+'Eloquent' => array('Illuminate\Database\Eloquent\Builder', 'Illuminate\Database\Query\Builder'),
+#修改为
+'Eloquent' => array('Illuminate\Database\Eloquent\Builder', 'Illuminate\Database\Query\Builder', 'Hbclare\ModelHelper\HelperQueryBuilder'),
+```
+>3. 执行命令，生成_ide_helper.php文件
+```
+php7 artisan ide-helper:generate
+```
 
-#### 2.artisan方法，生成程序
+
+#### 3.artisan方法，生成程序
 
 假设我们有一个user表
-|字段|说明|
------------- | ------------- 
+字段|说明
+---|---
  id|主键id
  passport|登陆账号
  password|登陆密码
@@ -48,7 +73,7 @@ php artisan make:repository Repository/UserRepository
 会在/app/Repository 下生成UserRepository类
 同时会在 /app/RepositoryInterface 目录下，生成UserRepositoryInterface类
 
-#### 3.在model中，缓存的使用
+#### 4.在model中，缓存的使用
 ```php
 <?php
 #Game.php
@@ -147,7 +172,7 @@ class GameImg extends Model {
 > 4. 执行 $gameImg update,delete操作，都会删除相关缓存
 > 5. 缓存优先级 setCacheKeys > autoForeignCache > autoCache
 
-#### 4.可以对较复杂的Model层操作，快速的进行缓存，同时对于该缓存key的设计，可以自动的进行缓存更新操作
+#### 5.可以对较复杂的Model层操作，快速的进行缓存，同时对于该缓存key的设计，可以自动的进行缓存更新操作
 ##### A. key通配处理：
 1. 如 gameinfo_by_name_{game_name},括号中的game_name,对应的就是表中的字段名字，如果条件中有 game_name=lol 这样的条件，就会将key变成 gameinfo_by_name_lol,并触发缓存动作（写缓存，或者更新缓存）
 2. 一个key里面可以包含多个{},如: user_info_type_{type}_id_{id}
@@ -188,7 +213,7 @@ class GameImg extends Model {
 - 相当于分给 setAfterUpdateFlushKey，setAfterDeleteFlushKey，setAfterInsertFlushKey写入了[$flushData]值
 
 
-#### 5. 提供常用sql封装方法，方便代码书写
+#### 6. 提供常用sql封装方法，方便代码书写
 ##### A. getOne()：通过主键查找数据，如果开启原子化缓存会自动处理缓存（测试通过） 
 ```php
 $model->getOne($id);
@@ -235,7 +260,8 @@ $fields = [
     DB::raw('count(DISTINCT gid) as kdump_gid_num')
 ];
 $predicate = [
-    'groupBy' => 'show_date'
+    'groupBy' => 'show_date',
+    'orderBy' => ['id'=>asc]
 ];
 return $this->KDumpModels->getListUpgraded($where, $predicate, $fields);
 ```
@@ -255,7 +281,7 @@ return $this->KDumpModels->getListUpgraded($where, $predicate, $fields);
 
 ##### F. getPaginateList:获得分页数据,不建议使用
 
-##### G. saveInfo:保存/修改方法
+##### G. saveInfo:保存/修改方法（测试通过）
 >param array saveInfo 需要保存或者修改的值，自动判断主键，自动清理缓存
 
 ##### H. delCleanCache: 条件删除，同时删除自动生成的缓存
@@ -263,3 +289,52 @@ return $this->KDumpModels->getListUpgraded($where, $predicate, $fields);
 
 ##### I. del:根据条件删除数据
 >直接删除
+
+### 7.特别注意
+1. 在getOne的时候使用with预加载功能，会将预加载的值也缓存起来，可能产生脏数据。使用的时候需要注意一下。
+2. 在使用setCacheKeys的时候，也会缓存预加载问题
+3. 在with过程中，setCacheKeys 方法会失效，因为with过程中，产生了新的Builder对象,原来对象中的配置消失了，这里可以使用Cache方法来做三级缓存
+
+### 8. 代码Demo
+1. 复杂sql写法
+```
+select * from `csp_netbar` where 
+`netbar_name` like %123% 
+or `netbar_address` like %123% 
+or `license_key` like %123% 
+and 
+(`city_id` = 207 
+and `borough_id` = 2126 
+and `ip` = 33333 
+and `contact_number` = 123123 
+and `soft_name` = 6)
+```
+```php
+$where = [];
+$where['city_id'] = 207;
+$where['borough_id'] = 2126;
+$where['ip'] = 33333;
+$where['contact_number'] = 123123;
+$where['soft_name'] = $condition['soft_name'];
+$where['netbar_name'] = ['or', ['like', '%123%']];
+$where['netbar_address'] = ['or', ['like', '%123%']];
+$where['license_key'] = ['or', ['like', '%123%']];
+$mode->getList($where);
+```
+```
+select * from `csp_netbar` where 
+(`city_id` = 207 
+and `borough_id` = 2126) 
+or (`ip` = 33333 
+and `soft_name` = 6)
+```
+```
+$where[] = [
+    'raw', 
+    "(`city_id` = 207 
+and `borough_id` = 2126) 
+or (`ip` = 33333 
+and `soft_name` = 6)"
+];
+$mode->getList($where);
+```
