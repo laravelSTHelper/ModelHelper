@@ -28,5 +28,4 @@ class DummyClass extends Eloquent {
         //开启自动分页缓存，实验方法，暂时默认设置5分钟
         $this->startAutoPageCache(5);
     }
-
 }
