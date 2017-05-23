@@ -338,19 +338,31 @@ class HelperQueryBuilder extends Builder
 
     //使用带缓存的方式，执行sql操作
     public function getCacheQuery($columns){
+        if($this->_readKey == false){
+            throw new \Exception('缓存key为空了，请检查代码！如:setCacheKeys是不是写错字段了');
+        }
         #如果缓存不存在
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
-//            dd($Row);
             if(!empty($Row)){
-                Cache::put($this->_readKey, $Row, Cache::getDefaultCacheTime());
+                $RowCollect = $Row->toArray();
+                Cache::put($this->_readKey, $RowCollect, Cache::getDefaultCacheTime());
             }
             $this->_readKey = array();
             return $Row;
         }else{
             $res = Cache::get($this->_readKey);
+            //清空需要读取的缓存key
             $this->_readKey = array();
-            return $res;
+            //重新组装model对象
+            $resData = [];
+            foreach($res as $key => $value){
+                $newModel = clone $this->model;#非常奇怪，压测中，有clone比没有clone的qps高了20%
+                $newModel->exists = true;
+                $newModel->setRawAttributes($value, true);
+                $resData[] = $newModel;
+            }
+            return collect($resData);
         }
     }
 
@@ -564,7 +576,13 @@ class HelperQueryBuilder extends Builder
         if (!empty($orderBy)) {
             $this->formatOrderBy($orderBy);
         }
-        return $this->first();
+        $res = $this->first();
+        if( is_array($res) ){
+            $this->model->exists = true;
+            $this->model->setRawAttributes($res, true);
+            return $this->model;
+        }
+        return $res;
     }
 
     /**
@@ -576,6 +594,7 @@ class HelperQueryBuilder extends Builder
     {
         return $this->find($id);
     }
+
 
     /**
      * 获取列表数据
