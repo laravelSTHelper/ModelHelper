@@ -356,8 +356,13 @@ class HelperQueryBuilder extends Builder
             $this->_readKey = array();
             //重新组装model对象
             $resData = [];
+            $checnNum = count($res);
             foreach($res as $key => $value){
-                $newModel = clone $this->model;#非常奇怪，压测中，有clone比没有clone的qps高了20%
+                if($checnNum>1){
+                    $newModel = clone $this->model;
+                }else{
+                    $newModel = $this->model;
+                }
                 $newModel->exists = true;
                 $newModel->setRawAttributes($value, true);
                 $resData[] = $newModel;
