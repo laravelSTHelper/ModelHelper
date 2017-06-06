@@ -65,7 +65,7 @@ class HelperQueryBuilder extends Builder
             #外键处理
             $foreignKeyArr = $this->model->foreignKey();
             foreach($foreignKeyArr as $foreignKeyK => $foreignKeyV){
-                $setCacheKey = 'autoForeignCache_'.$this->model->table().'_'
+                $setCacheKey = $this->model->getPreCacheKeyVersion().'autoForeignCache_'.$this->model->table().'_'
                     .$foreignKeyV.'_{'.$foreignKeyV.'}';
                 if($this->replaceKey($setCacheKey, 'where')){
                     #设置缓存时间
@@ -88,7 +88,7 @@ class HelperQueryBuilder extends Builder
         if( true === $this->model->getAutoEachCache() #且自动原子化缓存开启
             && $this->isSimple() #且是简单的sql
         ){
-            $setCacheKey = 'autoCache_'.$this->model->table().'_'
+            $setCacheKey = $this->model->getPreCacheKeyVersion().'autoCache_'.$this->model->table().'_'
                 .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
             #设置缓存时间
             Cache::setDefaultCacheTime($this->model->getAutoEachCacheTime());
@@ -130,14 +130,14 @@ class HelperQueryBuilder extends Builder
         $autoEachCache = [];
         if( true === $this->model->getAutoEachCache()){#透明处理
             if( 'i' !== $type ){ //原子化缓存，插入不处理
-                $autoEachCache[] = 'autoCache_'.$this->model->table().'_'
+                $autoEachCache[] = $this->model->getPreCacheKeyVersion().'autoCache_'.$this->model->table().'_'
                     .$this->model->primaryKey().'_{'.$this->model->primaryKey().'}';
             }
             #外键处理
             $foreignKeyArr = $this->model->foreignKey();
             $autoForeignKeyCache = [];
             foreach($foreignKeyArr as $foreignKeyK => $foreignKeyV){
-                $autoForeignKeyCache[] = 'autoForeignCache_'.$this->model->table().'_'
+                $autoForeignKeyCache[] = $this->model->getPreCacheKeyVersion().'autoForeignCache_'.$this->model->table().'_'
                     .$foreignKeyV.'_{'.$foreignKeyV.'}';
             }
         }
@@ -321,7 +321,7 @@ class HelperQueryBuilder extends Builder
 
         #设置缓存时间
         if(empty($this->_readKey) && !empty($this->model->getAutoPageCache())){
-            $keyPre = 'autoPageCache_'.md5($this->toSql().json_encode($this->getBindings()));
+            $keyPre = $this->model->getPreCacheKeyVersion().'autoPageCache_'.md5($this->toSql().json_encode($this->getBindings()));
             $cacheKey = $keyPre.'_'.$this->model->getPageCacheVer().'_'.$keyPre.'_page_'
                 .$page.'_perpage_'.$perPage;
             //dd($cacheKey);

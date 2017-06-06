@@ -8,6 +8,9 @@ use Cache;
 
 abstract class Model extends EloquentModel
 {
+	//设置当前版本，如果遇到大的改动可以自动让缓存失效，而不用手动清理缓存
+	protected $preCacheKeyVersion = 'v1.2.2_';
+
     //是否开启Model缓存总开关，false关闭，ture开启
     protected $endisabledCache = true;
 
@@ -78,6 +81,12 @@ abstract class Model extends EloquentModel
         return $this->autoEachCacheTime;
     }
 
+    //得到当前版本
+    public function getPreCacheKeyVersion()
+    {
+        return $this->preCacheKeyVersion;
+    }
+
     //得到分页缓存状态
     public function getAutoPageCache()
     {
@@ -90,7 +99,7 @@ abstract class Model extends EloquentModel
     }
     //等到分页缓存版本存储key
     public function getPageCacheVerKey(){
-        return 'pageCacheVer_'.$this->table();
+        return $this->preCacheKeyVersion.'pageCacheVer_'.$this->table();
     }
     //得到分页缓存版本
     public function getPageCacheVer(){
@@ -264,7 +273,7 @@ abstract class Model extends EloquentModel
             foreach ($data as $val) {
                 foreach ($foreignKeys as $foreignVal) {
                     if(!empty($val->$foreignVal)){
-                        $flushKey = 'autoForeignCache_'.$this->table().'_'
+                        $flushKey = $this->preCacheKeyVersion.'autoForeignCache_'.$this->table().'_'
                             .$foreignVal.'_'.$val->$foreignVal;
                         $this->setFlushKeys($flushKey);
                     }
