@@ -364,7 +364,10 @@ class HelperQueryBuilder extends Builder
                     $newModel = $this->model;
                 }
                 $newModel->exists = true;
-                $newModel->setRawAttributes($value, true);
+                $data = collect($value)->map(function($item,$key){
+                    return is_array($item)?json_encode($item):$item;
+                })->all();
+                $newModel->setRawAttributes($data, true);
                 $resData[] = $newModel;
             }
             return collect($resData);
