@@ -356,13 +356,10 @@ class HelperQueryBuilder extends Builder
             $this->_readKey = array();
             //重新组装model对象
             $resData = [];
-            $perimaryKey = $this->model->primaryKey();
             foreach($res as $key => $value){
                 //判断主键是否存在，且与新值中的主键值是否一致
                 //如果存在且不一致，说明需要创建新的对象存储数据
-                if(!empty($this->model->$perimaryKey)
-                && $this->model->$perimaryKey != $value[$perimaryKey]
-                ){
+                if(!empty($this->model->getAttributes())){
                     $newModel = clone $this->model;
                 }else{
                     $newModel = $this->model;
