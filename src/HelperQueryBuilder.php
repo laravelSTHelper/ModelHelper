@@ -356,19 +356,24 @@ class HelperQueryBuilder extends Builder
             $this->_readKey = array();
             //重新组装model对象
             $resData = [];
+            //保存已经生产出的对象
+            global $cacheModel;
+            //d($this->model);
+            //dump($this->model->attributesToArray());
             foreach($res as $key => $value){
-                //判断主键是否存在，且与新值中的主键值是否一致
-                //如果存在且不一致，说明需要创建新的对象存储数据
-                if(!empty($this->model->getAttributes())){
-                    $newModel = clone $this->model;
+                $modelCacheKey = '';
+                $modelCacheKey = md5($this->model->table().json_encode($value));
+                //如果对象存在数据，进入clone对象流程
+                if(!empty($cacheModel[$modelCacheKey])) {
+                    $newModel = $cacheModel[$modelCacheKey];
                 }else{
-                    $newModel = $this->model;
+                    $newModel = empty($this->model->getAttributes()) ?
+                                clone $this->model                  :
+                                $this->model                        ;
+                    $newModel->exists = true;
+                    $newModel->setRawAttributes($value, true);
+                    $cacheModel[$modelCacheKey] = $newModel;
                 }
-                $newModel->exists = true;
-                $data = collect($value)->map(function($item,$key){
-                    return is_array($item)?json_encode($item):$item;
-                })->all();
-                $newModel->setRawAttributes($data, true);
                 $resData[] = $newModel;
             }
             return collect($resData);
