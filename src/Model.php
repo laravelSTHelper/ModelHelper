@@ -163,9 +163,13 @@ abstract class Model extends EloquentModel
     //设置/读取 需删除缓存key
     public function setFlushKeys($key)
     {
-        !is_array($key) ?
-            $keyArr[] = $key :
-            $keyArr = $key;
+		if(!is_array($key)){
+            $keyArr[] = $this->preCacheKeyVersion.$key;
+		}else{
+			foreach($key as $k){
+				$keyArr[] = $this->preCacheKeyVersion.$k;
+			}
+		}
         $this->flushKey = array_merge($this->flushKey, $keyArr);
     }
 
@@ -177,9 +181,13 @@ abstract class Model extends EloquentModel
     //设置/读取 插入操作后删除缓存key
     public function setAfterInsertFlushKey($key)
     {
-        !is_array($key) ?
-            $keyArr[] = $key :
-            $keyArr = $key;
+		if(!is_array($key)){
+            $keyArr[] = $this->preCacheKeyVersion.$key;
+		}else{
+			foreach($key as $k){
+				$keyArr[] = $this->preCacheKeyVersion.$k;
+			}
+		}
         $this->afterInsertFlushKey = $keyArr;
     }
 
@@ -191,9 +199,13 @@ abstract class Model extends EloquentModel
     //设置/读取 更新操作后删除缓存key
     public function setAfterUpdateFlushKey($key)
     {
-        !is_array($key) ?
-            $keyArr[] = $key :
-            $keyArr = $key;
+		if(!is_array($key)){
+            $keyArr[] = $this->preCacheKeyVersion.$key;
+		}else{
+			foreach($key as $k){
+				$keyArr[] = $this->preCacheKeyVersion.$k;
+			}
+		}
         $this->afterUpdateFlushKey = $keyArr;
     }
 
@@ -206,9 +218,13 @@ abstract class Model extends EloquentModel
     //设置/读取 删除操作后删除缓存key
     public function setAfterDeleteFlushKey($key)
     {
-        !is_array($key) ?
-            $keyArr[] = $key :
-            $keyArr = $key;
+		if(!is_array($key)){
+            $keyArr[] = $this->preCacheKeyVersion.$key;
+		}else{
+			foreach($key as $k){
+				$keyArr[] = $this->preCacheKeyVersion.$k;
+			}
+		}
         $this->afterDeleteFlushKey = $keyArr;
     }
 
@@ -306,10 +322,10 @@ abstract class Model extends EloquentModel
         $primaryKey = $this->primaryKey();
         $foreignKeys = $this->foreignKey();
         foreach ($data as $val) {
-            $where[$primaryKey] = $val->$primaryKey;
+            $whereDel[$primaryKey] = $val->$primaryKey;
             //外键也要处理
             foreach ($foreignKeys as $foreignVal) {
-                $where[$foreignVal] = $val->$foreignVal;
+                $whereDel[$foreignVal] = $val->$foreignVal;
             }
             $this->del($where);
         }
