@@ -151,8 +151,12 @@ abstract class Model extends EloquentModel
     //设置/读取 需设置缓存key
     public function setCacheKeys($key)
     {
-        //设置缓存，增加版本
-        $this->cacheKey = $this->preCacheKeyVersion.$key;
+		if(empty($key)){
+            $this->cacheKey = '';
+		}else{
+			//设置缓存，增加版本
+			$this->cacheKey = $this->preCacheKeyVersion.$key;
+		}
     }
 
     public function getCacheKeys()
