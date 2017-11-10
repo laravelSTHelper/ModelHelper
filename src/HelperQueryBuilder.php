@@ -546,6 +546,9 @@ class HelperQueryBuilder extends Builder
         //获取字段
         $originColunms = $this->model->getColumnsArr();
         //获取表名
+        if(empty($originColunms)){
+            return false;
+        }
         foreach($originColunms as $colunmKey => $colunmValue){
             if( $keyName == $colunmKey){
                 return $colunmValue;

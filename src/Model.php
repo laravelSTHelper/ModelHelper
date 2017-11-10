@@ -324,14 +324,16 @@ abstract class Model extends EloquentModel
             return FALSE;
         }
         $primaryKey = $this->primaryKey();
-        $foreignKeys = $this->foreignKey();
+        //$foreignKeys = $this->foreignKey();
+        //这里直接处理所有的可修改字段
+        $fillable = $this->getFillable();
         foreach ($data as $val) {
             $whereDel[$primaryKey] = $val->$primaryKey;
-            //外键也要处理
-            foreach ($foreignKeys as $foreignVal) {
-                $whereDel[$foreignVal] = $val->$foreignVal;
+            //所有的可以修改字段，也做条件处理
+            foreach ($fillable as $fillableVal) {
+                $whereDel[$fillableVal] = $val->$fillableVal;
             }
-            $this->del($where);
+            $this->del($whereDel);
         }
         return TRUE;
     }
