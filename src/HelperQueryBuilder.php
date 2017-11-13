@@ -344,7 +344,7 @@ class HelperQueryBuilder extends Builder
         #如果缓存不存在
         if(!Cache::has($this->_readKey)){
             $Row = parent::get($columns);
-            if(!empty($Row)){
+            if(0 != $Row->count()){
                 $RowCollect = $Row->toArray();
                 Cache::put($this->_readKey, $RowCollect, Cache::getDefaultCacheTime());
             }
