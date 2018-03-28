@@ -727,6 +727,12 @@ class HelperQueryBuilder extends Builder
                                 });break;
                             case 'raw':
                                 $query->whereRaw($value[1]);break;//$value[1]为字符串，示例：(`column_id` = '0102' or `column_id` = 'ALL' and `start_time` <> 0)
+                            case 'wherenull':
+                                $query->whereNull($key);
+                                break;
+                            case 'wherenotnull':
+                                $query->whereNotNull($key);
+                                break;
                             default:
                                 $query->where($key, $value[0], $value[1]);break;
                         }
@@ -799,5 +805,19 @@ class HelperQueryBuilder extends Builder
         return $this->formatWhere($where)->min($field);
     }
 
+    /**
+     * 带where条件的update，乐观锁使用
+     * @param $where
+     * @param $saveInfo
+     * @return mixed
+     */
+    public function whereUpdate($where, $saveInfo)
+    {
+        $res = $this->formatWhere($where)->update($saveInfo);
+        if(empty($res)){
+            throw new \Exception('whereUpdate更新操作失败');
+        }
+        return $res;
+    }
 
 }
