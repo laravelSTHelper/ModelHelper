@@ -360,7 +360,7 @@ class HelperQueryBuilder extends Builder
             global $cacheModel;
             //d($this->model);
             //dump($this->model->attributesToArray());
-            foreach($res as $key => $value){
+            foreach((array)$res as $key => $value){
                 $modelCacheKey = '';
                 $modelCacheKey = md5($this->model->table().json_encode($value));
                 //如果对象存在数据，进入clone对象流程
