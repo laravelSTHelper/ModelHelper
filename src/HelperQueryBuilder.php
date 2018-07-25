@@ -686,7 +686,7 @@ class HelperQueryBuilder extends Builder
                 $this->groupBy($value);
             }
             if('having' == $key){#必须是数组[$column, $operator = null, $value = null, $boolean = 'and']
-                $this->having($value[0], is_set($value[1])?$value[1]:null, is_set($value[2])?$value[2]:null, is_set($value[3])?$value[3]:'and');
+                $this->having($value[0], isset($value[1])?$value[1]:null, isset($value[2])?$value[2]:null, isset($value[3])?$value[3]:'and');
             }
             if( 'orderby' == $key ){# orderby 的 value为数组 ['id'=>'desc']
                 $this->formatOrderBy($value);
