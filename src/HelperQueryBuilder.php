@@ -372,7 +372,10 @@ class HelperQueryBuilder extends Builder
                                 $this->model                        ;
                     $newModel->exists = true;
                     $newModel->setRawAttributes($value, true);
-                    $cacheModel[$modelCacheKey] = $newModel;
+					// 为了不撑爆内存，一个fpm进程，最多存100个对象
+					if( count($cacheModel) < 100 ){
+	                    $cacheModel[$modelCacheKey] = $newModel;
+					}
                 }
                 $resData[] = $newModel;
             }
