@@ -12,6 +12,9 @@
  V1.2.10|2017-11-10|修正一个bug：delCleanCache 方法,主动增加fillable中设置的所有字段，保证设置过的缓存全部自动清理
  V1.2.13|2017-11-13|修复一个bug: 自动化缓存，如果遇到空值，依旧写入缓存bug修正
  V1.2.14|2018-3-28|formatWhere增加null，notnull支持；增加whereUpdate方法，以支持乐观锁；laravel5.5 兼容验证
+ V1.2.15|2018-5-25|修正PHP7.2下，where为空时，whereformat报错的bug
+ V1.2.14|2018-7-25|having 条件下 bug 修正
+ V1.2.17|2018-11-7|修改一个在极大数组循环里使用model方法时，内存泄露的bug
 
 ## 注意
 1. 不能使用Eloquent ORM 中的软删除方法（use SoftDeletes）。这个设计与原子化缓存的思想设计有冲突
