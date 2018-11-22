@@ -374,7 +374,7 @@ class HelperQueryBuilder extends Builder
                     $newModel->setRawAttributes($value, true);
 					// 为了不撑爆内存，一个fpm进程，最多存100个对象
 					// 兼容7.2下，count null 报错的问题
-					if( empty(cacheModel) || count($cacheModel) < 100 ){
+					if( empty($cacheModel) || count($cacheModel) < 100 ){
 	                    $cacheModel[$modelCacheKey] = $newModel;
 					}
                 }
