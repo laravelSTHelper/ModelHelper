@@ -204,7 +204,7 @@ class HelperQueryBuilder extends Builder
         $checkFileds = array();
         $checkFileds[] = $this->model->primaryKey();
         $checkFileds[] = $this->model->table() . '.' . $this->model->primaryKey();
-        if (!in_array($whereArr['column'], $checkFileds)) {
+        if ( isset($whereArr['column']) && !in_array($whereArr['column'], $checkFileds)) {
             return false;
         }
         if (strtolower($whereArr['type']) === 'basic' && $whereArr['operator'] === '=') {
@@ -253,7 +253,7 @@ class HelperQueryBuilder extends Builder
             if(in_array(strtolower($whereArr['type']), ['nested', 'in'])){
                 return false;
             }
-            if($this->checkForeignKey($whereArr['column'])){
+            if(isset($whereArr['column']) && $this->checkForeignKey($whereArr['column'])){
                 return true;
             }
             if (strtolower($whereArr['type']) == 'Basic' && $whereArr['operator'] == '=') {
