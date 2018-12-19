@@ -731,6 +731,12 @@ class HelperQueryBuilder extends Builder
                                 });break;
                             case 'raw':
                                 $query->whereRaw($value[1]);break;//$value[1]为字符串，示例：(`column_id` = '0102' or `column_id` = 'ALL' and `start_time` <> 0)
+                            case 'wherenull':
+                                $query->whereNull($key);
+                                break;
+                            case 'wherenotnull':
+                                $query->whereNotNull($key);
+                                break;
                             default:
                                 $query->where($key, $value[0], $value[1]);break;
                         }
