@@ -659,6 +659,10 @@ class HelperQueryBuilder extends Builder
      */
     public function getPaginateList($where, $orderBy = [], $pageNum = 20)
     {
+		# 限制单页最大数为1000，防止接口被人爆了，拖垮数据库
+		if( $pageNum > 1000 ){
+			$pageNum = 1000;
+		}
         $this->formatWhere($where);
         if (!empty($orderBy)) {
             $this->formatOrderBy($orderBy);
@@ -674,6 +678,10 @@ class HelperQueryBuilder extends Builder
      */
     public function getPaginateListUpgraded($where, $pageNum = 20, $predicate, $fields='*')
     {
+		# 限制单页最大数为1000，防止接口被人爆了，拖垮数据库
+		if( $pageNum > 1000 ){
+			$pageNum = 1000;
+		}
         $this->formatWhere($where)->select($fields);
         $this->formatPredicate($predicate);
         return $this->paginate($pageNum);
