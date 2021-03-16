@@ -225,7 +225,7 @@ class GameImg extends Model {
 - 相当于分给 setAfterUpdateFlushKey，setAfterDeleteFlushKey，setAfterInsertFlushKey写入了[$flushData]值
 
 
-#### 6. 提供常用sql封装方法，方便代码书写
+#### 6. 提供常用sql封装方法，方便代码书写.
 ##### A. getOne()：通过主键查找数据，如果开启原子化缓存会自动处理缓存（测试通过） 
 ```php
 $model->getOne($id);
