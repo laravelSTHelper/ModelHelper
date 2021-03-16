@@ -300,8 +300,8 @@ abstract class Model extends EloquentModel
                     }
                 }
             }
-            $this->setRawAttributes($keyArr, true);#刻意将主键传给syncOriginal
-            $this->find($keyArr[$this->primaryKey]);#先查找ORM对象
+            $res = $this->find($keyArr[$this->primaryKey]);#先查找ORM对象
+            $this->setRawAttributes($res->getOriginal(), true);#将查询数据赋值给syncOriginal
             $this->exists = true;
             //unset($saveArr[$this->primaryKey]);
         }else{
