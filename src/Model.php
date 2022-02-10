@@ -9,7 +9,7 @@ use Cache;
 abstract class Model extends EloquentModel
 {
 	//设置当前版本，如果遇到大的改动可以自动让缓存失效，而不用手动清理缓存
-	protected $preCacheKeyVersion = 'v1.2.21_';
+	protected $preCacheKeyVersion = 'v1.2.23_';
 
     //是否开启Model缓存总开关，false关闭，ture开启
     protected $endisabledCache = true;
